@@ -3,7 +3,7 @@
 Techniques
 [ ]	Holdout set? 70/30 split? 10-fold CV?
 
-<h2>Models to try<h2>
+<h2>Models to try</h2>
 [x]    Linear model, all predictors
 [ ]    Linear model, best subset
 [ ]    Linear model, ridge regularization
