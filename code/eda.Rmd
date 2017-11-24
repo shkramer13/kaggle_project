@@ -1,0 +1,100 @@
+---
+title: "Exploratory Data Analysis"
+author: "Sam Kramer"
+date: "11/24/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaps)
+library(tidyverse)
+```
+
+
+# Read Data
+```{r, echo=FALSE}
+# LOAD DATA - MAY NOT WORK ON YOUR COMP
+
+MATT <- FALSE
+
+mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
+samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
+
+if (MATT) {
+  trainfile = paste(mattswd, '/data/train.csv', sep='')
+  testfile = paste(mattswd, '/data/test.csv', sep='')
+} else {
+  trainfile = paste(samswd, '/data/train.csv', sep='')
+  testfile = paste(samswd, '/data/test.csv', sep='')
+}
+
+df = read.csv(trainfile, header=TRUE)
+testData = read.csv(testfile, header=TRUE)
+```
+
+## Calculate Building Volumes
+```{r}
+df <- df %>% 
+  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>% 
+  mutate(Volume = Floor.Area * Height)
+
+df %>% 
+  distinct(Volume)
+```
+
+# EDA
+
+```{r, fig.width = 10, fig.height = 10}
+# pairs.plot <- GGally::ggpairs(df)
+
+# ggsave("../figures/pairwise scatter.pdf", pairs.plot, width=12, height=12)
+```
+
+```{r}
+df %>% 
+  ggplot(aes(Surface.Area, Outcome)) +
+  geom_point(aes(color = factor(Roof.Area))) + 
+  facet_grid(Height ~ Glazing.Area, labeller = label_both) + 
+  theme(legend.position = "bottom")
+```
+
+```{r}
+df %>% 
+  ggplot(aes(Surface.Area, Outcome)) +
+  geom_point(aes(color = factor(Roof.Area))) + 
+  facet_grid(~Glazing.Area, labeller = label_both) + 
+  theme(legend.position = "bottom")
+```
+
+```{r}
+df %>% 
+  ggplot(aes(Surface.Area, Outcome)) +
+  geom_point(aes(color = factor(Glazing.Area))) +
+  facet_wrap(~Volume, labeller = label_both) + 
+  theme(legend.position = "bottom")
+```
+
+
+# Observations
+
+* Relative Compactness looks like a function of surface area, and they're REALLY collinear, so we should only use one of these.
+
+* It looks like these simulations tried to test different building shapes for a few different fixed volumes. There are 12 different surface areas (same for relative compactness), 7 different wall areas, 4 different roof areas, and 2 different heights. I tried to estimate building volume by calculating floor area and multiplying by building height, and there are only 3 distinct volumes in the dataset. Maybe we could use this as a predictor?
+
+* The smallest volume buildings can have 2 different roof areas, but each of the two larger volumes only has one height
+
+* All buildings with the shorter height have >680 surface area. **These buildings use significantly less energy than the smaller surface area buildings that are taller.**
+
+* I think Glazing Distribution should be a categorical variable
+
+
+## Important Factors
+
+* Surface Area
+
+* Height
+
+* Glazing Area
+
+* 
