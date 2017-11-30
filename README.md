@@ -28,5 +28,13 @@
 [ ]    Smoothing spline  
 [ ]    Natural spline  
 [ ]		GAM  
-[ ]		Regression tree  
-[ ]		Bagging/boosting/random forest
+[x]		Regression tree  
+[x]		Bagging/boosting/random forest
+
+## Notes: 11/30
++ Boosting kicks ass  
+  + Play with # of trees, interaction depth, and shrinkage parameter
++ Other tree-based methods to try: bagging and random forest  
+  + random forest: pick # of variables for each iteration
+  + bagging: try it and see what happens
++ Other 

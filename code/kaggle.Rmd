@@ -8,9 +8,17 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(leaps)
+library(boot)
+library(tree)
+library(gbm)
+library(randomForest)
 library(tidyverse)
 ```
 
+
+```{r}
+rm(list = ls())
+```
 
 # Read Data
 ```{r, echo=FALSE}
@@ -22,70 +30,171 @@ mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_pro
 samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
 
 if (MATT) {
-  trainfile = paste(mattswd, '/data/train.csv', sep = '')
+  trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
+  validatefile = paste(mattswd, '/data/train_validate.csv', sep = '')
+  fulltrainfile <- paste(mattswd, '/data/train.csv', sep = '')
   testfile = paste(mattswd, '/data/test.csv', sep = '')
 } else {
-  trainfile = paste(samswd, '/data/train.csv', sep = '')
+  trainfile = paste(samswd, '/data/train_train.csv', sep = '')
+  validatefile = paste(samswd, '/data/train_validate.csv', sep = '')
+  fulltrainfile <- paste(samswd, '/data/train.csv', sep = '')
   testfile = paste(samswd, '/data/test.csv', sep = '')
 }
 
-df = read.csv(trainfile, header = TRUE)
-testData = read.csv(testfile, header = TRUE)
+train = read.csv(trainfile, header = TRUE)
+validate <- read.csv(validatefile, header = TRUE)
+trainFull <- read.csv(fulltrainfile, header = TRUE)
+test = read.csv(testfile, header = TRUE)
 ```
 
 
 ## Calculate Floor Area and Volumes
 ```{r}
-df <- df %>% 
-  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>% 
+train <- train %>%
+  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>%
+  mutate(Volume = Floor.Area * Height)
+
+validate <- validate %>% 
+  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>%
+  mutate(Volume = Floor.Area * Height)
+
+trainFull <- trainFull %>%
+  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>%
+  mutate(Volume = Floor.Area * Height)
+
+test <- test %>% 
+  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>%
   mutate(Volume = Floor.Area * Height)
 ```
-
-
-# Modeling
 
 ## Clean Data Frame
 
 ```{r}
 # Remove ID variable and turn Orientation and Glazing.Distr to factors
-df <- df %>% 
+train <- train %>% 
+  select(-ID, -X) %>% 
+  mutate(Orientation = as.factor(Orientation),
+         Glazing.Distr = as.factor(Glazing.Distr))
+
+validate <- validate %>% 
+  select(-ID, -X) %>% 
+  mutate(Orientation = as.factor(Orientation),
+         Glazing.Distr = as.factor(Glazing.Distr))
+
+trainFull <- trainFull %>% 
   select(-ID) %>% 
+  mutate(Orientation = as.factor(Orientation),
+         Glazing.Distr = as.factor(Glazing.Distr))
+
+test <- test %>% 
   mutate(Orientation = as.factor(Orientation),
          Glazing.Distr = as.factor(Glazing.Distr))
 ```
 
 
 
+# Modeling
+
+## Set Formula
+```{r}
+curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
+curr.formula <- formula(Outcome ~ .)
+```
+
+
 ## Linear Regressions
 ```{r, echo=FALSE}
 # FULL LINEAR MODEL
 
-lm.fit = lm(Outcome ~ ., data = df)
+lm.fit = lm(curr.formula, data = train)
 summary(lm.fit)
 
-# preds = predict(lm.fit, testData)
-# preds
+# glm1 <- glm(Outcome ~ .-Height -Roof.Area -Floor.Area, data = train)
+# cv.linear <- cv.glm(train, glm1, K = 10)
+# cv.linear$delta
+
+lm.preds <- predict(lm.fit, newdata = validate)
+sqrt(mean((validate$Outcome - lm.preds)^2))
 ```
 
 ### Best Subset Regression
 ```{r, echo=FALSE}
-regfit.full = regsubsets(Outcome~., df)
+# regfit.full = regsubsets(curr.formula, train, nvmax = 13)
 
 summary(regfit.full)
 
-lm.fit = lm(Outcome ~ Rel.Compact + Roof.Area + Height + Glazing.Area, 
-            data = df)
+# lm.fit = lm(Outcome ~ Rel.Compact + Roof.Area + Height + Glazing.Area, 
+#             data = train)
 
 # preds = predict(lm.fit, testData)
 ```
+
+## Regression Trees
+
+### Single Tree
+
+```{r}
+tree1 <- tree(curr.formula, data = train)
+
+tree1.cv <- cv.tree(tree1)
+plot(tree1.cv$size, tree1.cv$dev, type = 'b')
+
+tree1.preds <- predict(tree1, newdata = validate)
+sqrt(mean((validate$Outcome - tree1.preds)^2))
+```
+
+### Boosting
+
+```{r}
+num.trees <- 40000
+
+boost1 <- gbm(curr.formula, data = train, distribution = "gaussian",
+              n.trees = num.trees, interaction.depth = 5)
+boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
+              n.trees = num.trees, interaction.depth = 5)
+
+summary(boost1, plot = FALSE) %>% 
+  ggplot(aes(var, rel.inf)) +
+  geom_col() +
+  coord_flip()
+
+boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
+sqrt(mean((validate$Outcome - boost1.preds)^2))
+```
+
+### Random Forest
+
+```{r}
+randomForest1 <- randomForest(curr.formula, data = train, mtry = 6,
+                              importance = TRUE)
+
+randomForest1.preds <- predict(randomForest1, newdata = validate)
+sqrt(mean((validate$Outcome - randomForest1.preds)^2))
+```
+
+
 
 # Write Results
 
 ```{r, echo=FALSE}
 # OUTPUT PREDICTIONS TO FILE
+output.model <- boost1.full
+output.desc <- "boosting"
+output.number <- 3
+
 ID = seq(1,110)
-Outcome = preds
+Outcome = predict(output.model, newdata = test, n.trees = num.trees)
 predictions = cbind(ID, Outcome)
-write.table(predictions, file = "predictions.csv", sep = ",", col.names = TRUE, 
-            qmethod = "double", row.names = FALSE)
+
+if (MATT) {
+  outpath <- paste(mattswd, "results/", sep = "")
+} else {
+  outpath <- paste(samswd, "results/", sep = "")
+}
+
+outname <- paste(outpath, Sys.Date(), output.desc, "_predictions_", 
+                 output.number, ".csv", sep = "")
+
+write.table(predictions, file = outname, sep = ",", 
+            col.names = TRUE, qmethod = "double", row.names = FALSE)
 ```

@@ -11,6 +11,10 @@ library(leaps)
 library(tidyverse)
 ```
 
+```{r}
+rm(list = ls())
+```
+
 
 # Read Data
 ```{r, echo=FALSE}
@@ -22,15 +26,18 @@ mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_pro
 samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
 
 if (MATT) {
-  trainfile = paste(mattswd, '/data/train.csv', sep='')
-  testfile = paste(mattswd, '/data/test.csv', sep='')
+  trainfile = paste(mattswd, '/data/train.csv', sep = '')
+  testfile = paste(mattswd, '/data/test.csv', sep = '')
 } else {
-  trainfile = paste(samswd, '/data/train.csv', sep='')
-  testfile = paste(samswd, '/data/test.csv', sep='')
+  trainfile = paste(samswd, '/data/train.csv', sep = '')
+  testfile = paste(samswd, '/data/test.csv', sep = '')
 }
 
-df = read.csv(trainfile, header=TRUE)
-testData = read.csv(testfile, header=TRUE)
+# df = read.csv(trainfile, header=TRUE)
+testData = read.csv(testfile, header = TRUE)
+
+df <- read.csv(paste(samswd, "/data/train_train.csv", sep = ""),
+               header = TRUE)
 ```
 
 ## Calculate Building Volumes
@@ -70,9 +77,31 @@ df %>%
 ```{r}
 df %>% 
   ggplot(aes(Surface.Area, Outcome)) +
-  geom_point(aes(color = factor(Glazing.Area))) +
+  geom_point(aes(color = factor(Wall.Area))) +
   facet_wrap(~Volume, labeller = label_both) + 
   theme(legend.position = "bottom")
+```
+
+```{r}
+df %>% 
+  filter(Volume == 857.5) %>% 
+  ggplot(aes(Surface.Area, Outcome)) +
+  geom_point(aes(color = factor(Orientation))) + 
+  # facet_grid(Glazing.Distr~Glazing.Area, 
+  #           labeller = label_both) +
+  facet_wrap(~Glazing.Area, labeller = label_both,
+             scales = "free_y") +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+df %>% 
+  ggplot(aes(Surface.Area, Rel.Compact)) +
+  geom_point()
+
+df %>% 
+  distinct(Rel.Compact) %>% 
+  arrange(Rel.Compact)
 ```
 
 
@@ -98,3 +127,23 @@ df %>%
 * Glazing Area
 
 * 
+
+# Test Set
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
