@@ -8,41 +8,84 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(leaps)
+library(tidyverse)
 ```
 
+
+# Read Data
 ```{r, echo=FALSE}
 # LOAD DATA - MAY NOT WORK ON YOUR COMP
 
+MATT <- FALSE
+
 mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
-trainfile = paste(mattswd, '/data/train.csv', sep='')
-testfile = paste(mattswd, '/data/test.csv', sep='')
+samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
 
-df = read.csv(trainfile, header=TRUE)
-testData = read.csv(testfile, header=TRUE)
+if (MATT) {
+  trainfile = paste(mattswd, '/data/train.csv', sep = '')
+  testfile = paste(mattswd, '/data/test.csv', sep = '')
+} else {
+  trainfile = paste(samswd, '/data/train.csv', sep = '')
+  testfile = paste(samswd, '/data/test.csv', sep = '')
+}
+
+df = read.csv(trainfile, header = TRUE)
+testData = read.csv(testfile, header = TRUE)
 ```
 
-```{r, echo=FALSE}
-regfit.full = regsubsets(Outcome~., df)
-summary(regfit.full)
-lm.fit=lm(Outcome~Rel.Compact+Roof.Area + Height + Glazing.Area, data=df)
-preds = predict(lm.fit, testData)
 
+## Calculate Floor Area and Volumes
+```{r}
+df <- df %>% 
+  mutate(Floor.Area = Surface.Area - Wall.Area - Roof.Area) %>% 
+  mutate(Volume = Floor.Area * Height)
 ```
 
+
+# Modeling
+
+## Clean Data Frame
+
+```{r}
+# Remove ID variable and turn Orientation and Glazing.Distr to factors
+df <- df %>% 
+  select(-ID) %>% 
+  mutate(Orientation = as.factor(Orientation),
+         Glazing.Distr = as.factor(Glazing.Distr))
+```
+
+
+
+## Linear Regressions
 ```{r, echo=FALSE}
 # FULL LINEAR MODEL
 
-lm.fit=lm(Outcome~., data=df)
-preds = predict(lm.fit, testData)
+lm.fit = lm(Outcome ~ ., data = df)
 summary(lm.fit)
-preds
+
+# preds = predict(lm.fit, testData)
+# preds
 ```
 
+### Best Subset Regression
+```{r, echo=FALSE}
+regfit.full = regsubsets(Outcome~., df)
+
+summary(regfit.full)
+
+lm.fit = lm(Outcome ~ Rel.Compact + Roof.Area + Height + Glazing.Area, 
+            data = df)
+
+# preds = predict(lm.fit, testData)
+```
+
+# Write Results
 
 ```{r, echo=FALSE}
 # OUTPUT PREDICTIONS TO FILE
 ID = seq(1,110)
 Outcome = preds
 predictions = cbind(ID, Outcome)
-write.table(predictions, file="predictions.csv", sep=",", col.names=TRUE, qmethod="double", row.names=FALSE)
+write.table(predictions, file = "predictions.csv", sep = ",", col.names = TRUE, 
+            qmethod = "double", row.names = FALSE)
 ```
