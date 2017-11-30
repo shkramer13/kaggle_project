@@ -6,7 +6,7 @@ path <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/data/"
 train.full <- read.csv(paste(path, "train.csv", sep = ""), header = TRUE)
 
 # Set fraction of training data to use for model selection
-frac <- 0.8
+frac <- 0.9
 
 # Randomly sample rows
 train.indices <- sample(nrow(train.full), round(frac * nrow(train.full)))
