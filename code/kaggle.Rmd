@@ -98,7 +98,7 @@ test <- test %>%
 ## Set Formula
 ```{r}
 curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
-curr.formula <- formula(Outcome ~ .)
+# curr.formula <- formula(Outcome ~ .)
 ```
 
 
@@ -121,7 +121,7 @@ sqrt(mean((validate$Outcome - lm.preds)^2))
 ```{r, echo=FALSE}
 # regfit.full = regsubsets(curr.formula, train, nvmax = 13)
 
-summary(regfit.full)
+# summary(regfit.full)
 
 # lm.fit = lm(Outcome ~ Rel.Compact + Roof.Area + Height + Glazing.Area, 
 #             data = train)
