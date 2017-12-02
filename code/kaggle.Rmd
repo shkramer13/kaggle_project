@@ -24,7 +24,7 @@ rm(list = ls())
 ```{r, echo=FALSE}
 # LOAD DATA - MAY NOT WORK ON YOUR COMP
 
-MATT <- FALSE
+MATT <- TRUE
 
 mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
 samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
@@ -146,20 +146,27 @@ sqrt(mean((validate$Outcome - tree1.preds)^2))
 ### Boosting
 
 ```{r}
-num.trees <- 40000
-
+num.trees <- 1000
+num.t <- 2000
 boost1 <- gbm(curr.formula, data = train, distribution = "gaussian",
               n.trees = num.trees, interaction.depth = 5)
 boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
               n.trees = num.trees, interaction.depth = 5)
+
+boost2 <- gbm(curr.formula, data = train, distribution = "gaussian",
+              n.trees = 40000, interaction.depth = 5)
 
 summary(boost1, plot = FALSE) %>% 
   ggplot(aes(var, rel.inf)) +
   geom_col() +
   coord_flip()
 
+
+boost2.preds <- predict(boost2, newdata = validate, n.trees = 40000)
 boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
-sqrt(mean((validate$Outcome - boost1.preds)^2))
+sqrt(mean((validate$Outcome - (.5*(boost1.preds+boost2.preds)))^2))
+sqrt(mean((validate$Outcome - boost2.preds))^2 )
+sqrt(mean((validate$Outcome - (boost1.preds)))^2)
 ```
 
 ### Random Forest
@@ -187,7 +194,7 @@ Outcome = predict(output.model, newdata = test, n.trees = num.trees)
 predictions = cbind(ID, Outcome)
 
 if (MATT) {
-  outpath <- paste(mattswd, "results/", sep = "")
+  outpath <- paste(mattswd, "/results/", sep = "")
 } else {
   outpath <- paste(samswd, "results/", sep = "")
 }
