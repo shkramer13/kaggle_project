@@ -20,14 +20,21 @@ library(tidyverse)
 rm(list = ls())
 ```
 
+```{r Functions}
+calc_RMSE <- function(x, y) {
+  sqrt(mean((x - y)^2))
+}
+```
+
+
 # Read Data
 ```{r, echo=FALSE}
 # LOAD DATA - MAY NOT WORK ON YOUR COMP
 
-MATT <- TRUE
+MATT <- FALSE
 
 mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
-samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
+samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS_202/kaggle_project/"
 
 if (MATT) {
   trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
@@ -114,7 +121,7 @@ summary(lm.fit)
 # cv.linear$delta
 
 lm.preds <- predict(lm.fit, newdata = validate)
-sqrt(mean((validate$Outcome - lm.preds)^2))
+calc_RMSE(lm.preds, validate$Outcome)
 ```
 
 ### Best Subset Regression
@@ -140,7 +147,18 @@ tree1.cv <- cv.tree(tree1)
 plot(tree1.cv$size, tree1.cv$dev, type = 'b')
 
 tree1.preds <- predict(tree1, newdata = validate)
-sqrt(mean((validate$Outcome - tree1.preds)^2))
+calc_RMSE(tree1.preds, validate$Outcome)
+```
+
+### Random Forest
+
+```{r}
+randomForest1 <- randomForest(curr.formula, data = train, mtry = 6,
+                              importance = TRUE)
+
+randomForest1.preds <- predict(randomForest1, newdata = validate)
+
+calc_RMSE(validate$Outcome, randomForest1.preds)
 ```
 
 ### Boosting
@@ -164,20 +182,51 @@ summary(boost1, plot = FALSE) %>%
 
 boost2.preds <- predict(boost2, newdata = validate, n.trees = 40000)
 boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
-sqrt(mean((validate$Outcome - (.5*(boost1.preds+boost2.preds)))^2))
-sqrt(mean((validate$Outcome - boost2.preds))^2 )
-sqrt(mean((validate$Outcome - (boost1.preds)))^2)
-```
 
-### Random Forest
+calc_RMSE(validate$Outcome, boost1.preds)
+calc_RMSE(validate$Outcome, boost2.preds)
+calc_RMSE(.5*(boost1.preds + boost2.preds), validate$Outcome)
+```
 
 ```{r}
-randomForest1 <- randomForest(curr.formula, data = train, mtry = 6,
-                              importance = TRUE)
+kfcv_boost <- function(formula, data, num.trees, inter.depth, k) {
+  
+  folds <- sample(1:k, nrow(data), replace = TRUE)
+  
+  results <- numeric(length = k)
+  
+  for (i in 1:k) {
+    fit <- data[folds != i,]
+    leftout <- data[folds == i,]
+    
+    mod <- gbm(formula, data = fit, distribution = "gaussian",
+               n.trees = num.trees, interaction.depth = inter.depth)
+    preds <- predict(mod, newdata = leftout, n.trees = num.trees)
+    results[i] <- calc_RMSE(preds, leftout$Outcome)
+  }
+  
+  mean(results)
+}
 
-randomForest1.preds <- predict(randomForest1, newdata = validate)
-sqrt(mean((validate$Outcome - randomForest1.preds)^2))
+
+num.trees <- 40000
+
+kfcv_boost(curr.formula, train, num.trees, inter.depth = 5, k = 10)
+
+# train.new <- train %>% 
+#   select(-Height, -Roof.Area, -Floor.Area, -Rel.Compact)
+
+# form.new <- formula(Outcome ~ .)
+# 
+# set.seed(3)
+# 
+# results <- gbm(form.new, train.new, n.trees = num.trees,
+#                distribution = "gaussian",
+#                interaction.depth = 5, cv.folds = 10)
+# 
+# results
 ```
+
 
 
 
