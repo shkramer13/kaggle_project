@@ -1,7 +1,5 @@
 
-#### Libraries ####
-library(leaps)
-library(boot)
+#### Libraries ####)
 library(tree)
 library(gbm)
 library(randomForest)
