@@ -13,13 +13,18 @@ calc_RMSE <- function(x, y) {
 
 kfcv_boost <- function(formula, data, params, k) {
   
+  mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
+  samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS_202/kaggle_project"
+  
+  MATT <- FALSE
+  
   folds <- sample(1:k, nrow(data), replace = TRUE)
   
   results <- params
   results[,"MSE"] <- rep(NA, nrow(params))
   
   for (i in 1:nrow(params)) {
-    
+    print(paste0("parameter df row = ", i))    
     temp <- rep(NA, k)
     
     for (j in 1:k) {
@@ -40,9 +45,37 @@ kfcv_boost <- function(formula, data, params, k) {
     }
     
     results[i, "MSE"] <- mean(temp)
+    
+    if (MATT) {
+      outpath <- paste0(mattswd, "/data/")
+    } else {
+      outpath <- paste0(samswd, "/data")
+    } 
+    
+    if (i == 1) {
+      # write.csv(results[i,], file = paste0(outpath, "/cv_results_new_test.csv"),
+      #           col.names = TRUE, row.names = FALSE, append = FALSE)
+      
+      write.table(results[i,], 
+                  file = paste0(outpath, "/cv_results_new_test.csv"), 
+                  sep = ",", 
+                  col.names = TRUE, 
+                  qmethod = "double", 
+                  row.names = FALSE,
+                  append = FALSE)
+    } else {
+      # write.csv(results[i,], file = paste0(outpath, "/cv_results_new_test.csv"),
+      #           col.names = FALSE, row.names = FALSE, append = TRUE)
+      
+      write.table(results[i,], 
+                  file = paste0(outpath, "/cv_results_new_test.csv"), 
+                  sep = ",", 
+                  col.names = FALSE, 
+                  qmethod = "double", 
+                  row.names = FALSE,
+                  append = TRUE)
+    }
   }
-  
-  results
 }
 
 
@@ -117,12 +150,16 @@ curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
 
 #### Set Parameters ####
 
-shrinkages <- c(0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 
-                0.25, 0.5)
+# shrinkages <- c(0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 
+#                 0.25, 0.5)
+# 
+# num.trees <- seq(0, 200000, 20000)
+# 
+# inter.depths <- c(1:5)
 
-num.trees <- seq(0, 200000, 20000)
-
-inter.depths <- c(1:5)
+shrinkages <- c(0.001)
+num.trees <- c(1000, 2000, 4000, 8000)
+inter.depths <- c(5)
 
 params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
                       interaction.depth = inter.depths)
@@ -132,14 +169,14 @@ cv.results <- kfcv_boost(curr.formula, train, params, 10)
 
 
 #### Write Results
-if (MATT) {
-  outpath <- paste0(mattswd, "/data/")
-} else {
-  outpath <- paste0(samswd, "/data")
-}
-
-write.csv(cv.results, file = paste0(outpath, "/cv_results.csv"),
-          col.names = TRUE, row.names = FALSE)
+# if (MATT) {
+#   outpath <- paste0(mattswd, "/data/")
+# } else {
+#   outpath <- paste0(samswd, "/data")
+# }
+# 
+# write.csv(cv.results, file = paste0(outpath, "/cv_results.csv"),
+#           col.names = TRUE, row.names = FALSE)
 
 
 

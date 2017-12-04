@@ -34,24 +34,27 @@ calc_RMSE <- function(x, y) {
 MATT <- FALSE
 
 mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
-samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS_202/kaggle_project/"
+samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS_202/kaggle_project"
 
 if (MATT) {
   trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
   validatefile = paste(mattswd, '/data/train_validate.csv', sep = '')
   fulltrainfile <- paste(mattswd, '/data/train.csv', sep = '')
   testfile = paste(mattswd, '/data/test.csv', sep = '')
+  crossvalfile <- paste(mattswd, '/data/cv_results_new.csv')
 } else {
   trainfile = paste(samswd, '/data/train_train.csv', sep = '')
   validatefile = paste(samswd, '/data/train_validate.csv', sep = '')
   fulltrainfile <- paste(samswd, '/data/train.csv', sep = '')
   testfile = paste(samswd, '/data/test.csv', sep = '')
+  crossvalfile <- paste(samswd, '/data/cv_results_new.csv')
 }
 
-train = read.csv(trainfile, header = TRUE)
+train <- read.csv(trainfile, header = TRUE)
 validate <- read.csv(validatefile, header = TRUE)
 trainFull <- read.csv(fulltrainfile, header = TRUE)
-test = read.csv(testfile, header = TRUE)
+test <- read.csv(testfile, header = TRUE)
+crossval_results <- read.csv(crossvalfile, header = TRUE)
 ```
 
 

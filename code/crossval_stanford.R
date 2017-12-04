@@ -40,41 +40,61 @@ kfcv_boost <- function(formula, data, params, k) {
     }
     
     results[i, "MSE"] <- mean(temp)
-  
-    if (MATT) {
-      outpath <- paste0(mattswd, "/data/")
-    } else {
-      outpath <- paste0(samswd, "/data")
-    } 
 
-   if (i == 1) {
-	 write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
-                   col.names = TRUE, row.names = FALSE, append = FALSE)
-   } else {
-       write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
-                   col.names = FALSE, row.names = FALSE, append = TRUE)
-   }
-  }
+    outpath <- "../data"
+    
+    if (i == 1) {
+      # write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
+      #              col.names = TRUE, row.names = FALSE, append = FALSE)
+      
+      write.table(results[i,], 
+                  file = paste0(outpath, "/cv_results_new.csv"), 
+                  sep = ",", 
+                  col.names = FALSE, 
+                  qmethod = "double", 
+                  row.names = FALSE,
+                  append = TRUE)
+      
+      } else {
+        # write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
+        #            col.names = FALSE, row.names = FALSE, append = TRUE)
+        
+        write.table(results[i,], 
+                    file = paste0(outpath, "/cv_results_new_test.csv"), 
+                    sep = ",", 
+                    col.names = FALSE, 
+                    qmethod = "double", 
+                    row.names = FALSE,
+                    append = TRUE)
+      }
+    }
 }
 
 
 #### Read Data ####
-MATT <- FALSE
+# MATT <- FALSE
+# 
+# mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
+# samswd <- ".."
+# 
+# if (MATT) {
+#   trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
+#   validatefile = paste(mattswd, '/data/train_validate.csv', sep = '')
+#   fulltrainfile <- paste(mattswd, '/data/train.csv', sep = '')
+#   testfile = paste(mattswd, '/data/test.csv', sep = '')
+# } else {
+#   trainfile = paste(samswd, '/data/train_train.csv', sep = '')
+#   validatefile = paste(samswd, '/data/train_validate.csv', sep = '')
+#   fulltrainfile <- paste(samswd, '/data/train.csv', sep = '')
+#   testfile = paste(samswd, '/data/test.csv', sep = '')
+# }
 
-mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
-samswd <- ".."
+inpath <- ".."
 
-if (MATT) {
-  trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
-  validatefile = paste(mattswd, '/data/train_validate.csv', sep = '')
-  fulltrainfile <- paste(mattswd, '/data/train.csv', sep = '')
-  testfile = paste(mattswd, '/data/test.csv', sep = '')
-} else {
-  trainfile = paste(samswd, '/data/train_train.csv', sep = '')
-  validatefile = paste(samswd, '/data/train_validate.csv', sep = '')
-  fulltrainfile <- paste(samswd, '/data/train.csv', sep = '')
-  testfile = paste(samswd, '/data/test.csv', sep = '')
-}
+trainfile = paste(inpath, '/data/train_train.csv', sep = '')
+validatefile = paste(inpath, '/data/train_validate.csv', sep = '')
+fulltrainfile <- paste(inpath, '/data/train.csv', sep = '')
+testfile = paste(inpath, '/data/test.csv', sep = '')
 
 train = read.csv(trainfile, header = TRUE)
 validate <- read.csv(validatefile, header = TRUE)
@@ -129,12 +149,14 @@ curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
 
 #### Set Parameters ####
 
-shrinkages <- c(0.0001, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 
-                0.25, 0.5)
+# shrinkages <- c(0.00001, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.25)
+shrinkages <- c(0.001)
 
-num.trees <- seq(0, 200000, 20000)
+# num.trees <- c(10000, 20000, 40000, 80000, 160000)
+num.trees <- c(20000)
 
-inter.depths <- c(1:5)
+#inter.depths <- c(1:5)
+inter.depths <- c(5)
 
 params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
                       interaction.depth = inter.depths)
@@ -144,13 +166,14 @@ cv.results <- kfcv_boost(curr.formula, train, params, 5)
 
 
 #### Write Results
-if (MATT) {
-  outpath <- paste0(mattswd, "/data/")
-} else {
-  outpath <- paste0(samswd, "/data")
-}
+# if (MATT) {
+#   outpath <- paste0(mattswd, "/data/")
+# } else {
+#   outpath <- paste0(samswd, "/data")
+# }
+outpath <- paste0(inpath, "/data")
 
-write.csv(cv.results, file = paste0(outpath, "/cv_results_new.csv"),
+write.csv(cv.results, file = paste0(outpath, "/cv_results_final.csv"),
           col.names = TRUE, row.names = FALSE, append = TRUE)
 
 
