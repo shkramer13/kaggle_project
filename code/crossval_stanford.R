@@ -50,7 +50,7 @@ kfcv_boost <- function(formula, data, params, k) {
 MATT <- FALSE
 
 mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
-samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS_202/kaggle_project"
+samswd <- ".."
 
 if (MATT) {
   trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
