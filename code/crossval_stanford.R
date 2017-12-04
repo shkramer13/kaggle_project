@@ -41,26 +41,26 @@ kfcv_boost <- function(formula, data, params, k) {
     
     results[i, "MSE"] <- mean(temp)
 
-    outpath <- "../data"
+    outpath <- "../data/cv_results_FINAL.csv"
     
     if (i == 1) {
       # write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
       #              col.names = TRUE, row.names = FALSE, append = FALSE)
       
       write.table(results[i,], 
-                  file = paste0(outpath, "/cv_results_new.csv"), 
+                  file = outpath, 
                   sep = ",", 
-                  col.names = FALSE, 
+                  col.names = TRUE, 
                   qmethod = "double", 
                   row.names = FALSE,
-                  append = TRUE)
+                  append = FALSE)
       
       } else {
         # write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
         #            col.names = FALSE, row.names = FALSE, append = TRUE)
         
         write.table(results[i,], 
-                    file = paste0(outpath, "/cv_results_new_test.csv"), 
+                    file = outpath, 
                     sep = ",", 
                     col.names = FALSE, 
                     qmethod = "double", 
@@ -153,7 +153,7 @@ curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
 shrinkages <- c(0.001)
 
 # num.trees <- c(10000, 20000, 40000, 80000, 160000)
-num.trees <- c(20000)
+num.trees <- c(1000, 20000, 40000)
 
 #inter.depths <- c(1:5)
 inter.depths <- c(5)
@@ -161,7 +161,9 @@ inter.depths <- c(5)
 params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
                       interaction.depth = inter.depths)
 
-cv.results <- kfcv_boost(curr.formula, train, params, 5)
+
+#### Run Cross-Validation ####
+kfcv_boost(curr.formula, train, params, 5)
 
 
 
@@ -171,10 +173,11 @@ cv.results <- kfcv_boost(curr.formula, train, params, 5)
 # } else {
 #   outpath <- paste0(samswd, "/data")
 # }
-outpath <- paste0(inpath, "/data")
 
-write.csv(cv.results, file = paste0(outpath, "/cv_results_final.csv"),
-          col.names = TRUE, row.names = FALSE, append = TRUE)
+# outpath <- paste0(inpath, "/data")
+
+# write.csv(cv.results, file = paste0(outpath, "/cv_results_final.csv"),
+#           col.names = TRUE, row.names = FALSE, append = TRUE)
 
 
 
