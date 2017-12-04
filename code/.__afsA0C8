@@ -19,7 +19,7 @@ kfcv_boost <- function(formula, data, params, k) {
   results[,"MSE"] <- rep(NA, nrow(params))
   
   for (i in 1:nrow(params)) {
-    print(paste0("parameter df row = ", i))    
+    
     temp <- rep(NA, k)
     
     for (j in 1:k) {
@@ -40,21 +40,9 @@ kfcv_boost <- function(formula, data, params, k) {
     }
     
     results[i, "MSE"] <- mean(temp)
-  
-    if (MATT) {
-      outpath <- paste0(mattswd, "/data/")
-    } else {
-      outpath <- paste0(samswd, "/data")
-    } 
-
-   if (i == 1) {
-	 write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
-                   col.names = TRUE, row.names = FALSE, append = FALSE)
-   } else {
-       write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
-                   col.names = FALSE, row.names = FALSE, append = TRUE)
-   }
   }
+  
+  results
 }
 
 
@@ -139,7 +127,7 @@ inter.depths <- c(1:5)
 params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
                       interaction.depth = inter.depths)
 
-cv.results <- kfcv_boost(curr.formula, train, params, 5)
+cv.results <- kfcv_boost(curr.formula, train, params, 10)
 
 
 
@@ -150,8 +138,8 @@ if (MATT) {
   outpath <- paste0(samswd, "/data")
 }
 
-write.csv(cv.results, file = paste0(outpath, "/cv_results_new.csv"),
-          col.names = TRUE, row.names = FALSE, append = TRUE)
+write.csv(cv.results, file = paste0(outpath, "/cv_results.csv"),
+          col.names = TRUE, row.names = FALSE)
 
 
 

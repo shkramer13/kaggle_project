@@ -40,21 +40,9 @@ kfcv_boost <- function(formula, data, params, k) {
     }
     
     results[i, "MSE"] <- mean(temp)
-  
-    if (MATT) {
-      outpath <- paste0(mattswd, "/data/")
-    } else {
-      outpath <- paste0(samswd, "/data")
-    } 
-
-   if (i == 1) {
-	 write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
-                   col.names = TRUE, row.names = FALSE, append = FALSE)
-   } else {
-       write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
-                   col.names = FALSE, row.names = FALSE, append = TRUE)
-   }
   }
+  
+  results
 }
 
 
@@ -150,8 +138,8 @@ if (MATT) {
   outpath <- paste0(samswd, "/data")
 }
 
-write.csv(cv.results, file = paste0(outpath, "/cv_results_new.csv"),
-          col.names = TRUE, row.names = FALSE, append = TRUE)
+write.csv(cv.results, file = paste0(outpath, "/cv_results.csv"),
+          col.names = TRUE, row.names = FALSE)
 
 
 
