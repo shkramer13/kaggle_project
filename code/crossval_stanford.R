@@ -1,8 +1,8 @@
 
 #### Libraries ####)
-library(tree)
+# library(tree)
 library(gbm)
-library(randomForest)
+# library(randomForest)
 library(tidyverse)
 
 
@@ -149,14 +149,14 @@ curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
 
 #### Set Parameters ####
 
-# shrinkages <- c(0.00001, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.25)
-shrinkages <- c(0.001)
+shrinkages <- c(0.00001, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.25)
+# shrinkages <- c(0.001)
 
-# num.trees <- c(10000, 20000, 40000, 80000, 160000)
-num.trees <- c(1000, 20000, 40000)
+num.trees <- c(10000, 20000, 40000, 80000, 160000)
+# num.trees <- c(1000, 20000, 40000)
 
-#inter.depths <- c(1:5)
-inter.depths <- c(5)
+inter.depths <- c(1:5)
+# inter.depths <- c(5)
 
 params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
                       interaction.depth = inter.depths)
