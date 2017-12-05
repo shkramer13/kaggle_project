@@ -41,7 +41,7 @@ kfcv_boost <- function(formula, data, params, k) {
     
     results[i, "MSE"] <- mean(temp)
 
-    outpath <- "../data/cv_results_FINAL.csv"
+    outpath <- "../data/cv_results_FINAL_2.csv"
     
     if (i == 1) {
       # write.csv(results[i,], file = paste0(outpath, "/cv_results_new.csv"),
@@ -149,13 +149,13 @@ curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
 
 #### Set Parameters ####
 
-shrinkages <- c(0.00001, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.25)
+shrinkages <- c(0.00001, 0.0001, 0.001)
 # shrinkages <- c(0.001)
 
-num.trees <- c(10000, 20000, 40000, 80000, 160000)
+num.trees <- c(25000, 50000, 100000, 250000, 500000, 750000, 1000000)
 # num.trees <- c(1000, 20000, 40000)
 
-inter.depths <- c(1:5)
+inter.depths <- c(5:7)
 # inter.depths <- c(5)
 
 params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
@@ -163,7 +163,7 @@ params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees,
 
 
 #### Run Cross-Validation ####
-kfcv_boost(curr.formula, train, params, 5)
+kfcv_boost(curr.formula, train, params, 10)
 
 
 

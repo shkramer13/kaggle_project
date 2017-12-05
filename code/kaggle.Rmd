@@ -24,6 +24,34 @@ rm(list = ls())
 calc_RMSE <- function(x, y) {
   sqrt(mean((x - y)^2))
 }
+
+kfcv_boost_single <- function(formula, data, num.trees = 1000, shrink = 0.001, 
+                              inter.depth = 1, k = 10) {
+  
+  folds <- sample(1:k, nrow(data), replace = TRUE)
+  
+  results <- rep(NA, k)
+  
+  for (j in 1:k) {
+    
+    fit <- data[folds != j,]
+    val <- data[folds == j,]
+    
+    mod <- gbm(formula, 
+               data = fit, 
+               distribution = "gaussian",
+               n.trees = num.trees,
+               shrinkage = shrink,
+               interaction.depth = inter.depth)
+    
+    preds <- predict(mod, newdata = val, 
+                     n.trees = num.trees)
+    
+    results <- mean((val$Outcome - preds)^2)
+  }
+  
+  mean(results)
+}
 ```
 
 
@@ -41,13 +69,13 @@ if (MATT) {
   validatefile = paste(mattswd, '/data/train_validate.csv', sep = '')
   fulltrainfile <- paste(mattswd, '/data/train.csv', sep = '')
   testfile = paste(mattswd, '/data/test.csv', sep = '')
-  crossvalfile <- paste(mattswd, '/data/cv_results_new.csv')
+  crossvalfile <- paste0(mattswd, '/data/cv_results_FINAL.csv')
 } else {
   trainfile = paste(samswd, '/data/train_train.csv', sep = '')
   validatefile = paste(samswd, '/data/train_validate.csv', sep = '')
   fulltrainfile <- paste(samswd, '/data/train.csv', sep = '')
   testfile = paste(samswd, '/data/test.csv', sep = '')
-  crossvalfile <- paste(samswd, '/data/cv_results_new.csv')
+  crossvalfile <- paste0(samswd, '/data/cv_results_FINAL.csv')
 }
 
 train <- read.csv(trainfile, header = TRUE)
@@ -164,7 +192,142 @@ randomForest1.preds <- predict(randomForest1, newdata = validate)
 calc_RMSE(validate$Outcome, randomForest1.preds)
 ```
 
+### Boosting - Cross Validation Results
+
+```{r}
+shrinkages <- c(0.00001, 0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.25)
+
+num.trees <- c(10000, 20000, 40000, 80000, 160000)
+
+inter.depths <- c(1:5)
+
+params <- expand.grid(shrinkage = shrinkages, n.trees = num.trees, 
+                      interaction.depth = inter.depths)
+
+crossval_results <- crossval_results %>% 
+  mutate(RMSE = sqrt(MSE))
+```
+
+
+```{r}
+# crossval_results %>%
+#   filter(interaction.depth == 1) %>%
+#   ggplot(aes(1 / shrinkage, RMSE)) +
+#   geom_line(aes(color = factor(n.trees))) +
+#   geom_point(aes(color = factor(n.trees))) +
+#   scale_y_log10(breaks = 10^c(-1:5)) +
+#   scale_x_log10(breaks = 10^c(-5:5)) +
+#   labs(title = paste0("interaction depth = ", 1)) +
+#   theme(legend.position = "bottom")
+
+# crossval_results %>%
+#   filter(interaction.depth == 2) %>%
+#   filter(MSE <= 1) %>%
+#   ggplot(aes(1 / shrinkage, RMSE)) +
+#   geom_line(aes(color = factor(n.trees))) +
+#   geom_point(aes(color = factor(n.trees))) +
+#   # scale_y_log10(breaks = 10^c(-1:5)) +
+#   scale_x_log10(breaks = 10^c(-5:5)) +
+#   labs(title = paste0("interaction depth = ", 2)) +
+#   theme(legend.position = "bottom")
+# 
+# crossval_results %>%
+#   filter(interaction.depth == 3) %>%
+#   filter(MSE <= 1) %>%
+#   ggplot(aes(1 / shrinkage, RMSE)) +
+#   geom_line(aes(color = factor(n.trees))) +
+#   geom_point(aes(color = factor(n.trees))) +
+#   # scale_y_log10(breaks = 10^c(-1:5)) +
+#   scale_x_log10(breaks = 10^c(-5:5)) +
+#   labs(title = paste0("interaction depth = ", 3)) +
+#   theme(legend.position = "bottom")
+# 
+# crossval_results %>%
+#   filter(interaction.depth == 4) %>%
+#   filter(MSE <= 1) %>%
+#   ggplot(aes(1 / shrinkage, RMSE)) +
+#   geom_line(aes(color = factor(n.trees))) +
+#   geom_point(aes(color = factor(n.trees))) +
+#   # scale_y_log10(breaks = 10^c(-1:5)) +
+#   scale_x_log10(breaks = 10^c(-5:5)) +
+#   labs(title = paste0("interaction depth = ", 4)) +
+#   theme(legend.position = "bottom")
+# 
+# crossval_results %>%
+#   filter(interaction.depth == 5) %>%
+#   filter(MSE <= 1) %>%
+#   ggplot(aes(1 / shrinkage, MSE)) +
+#   geom_line(aes(color = factor(n.trees))) +
+#   geom_point(aes(color = factor(n.trees))) +
+#   # scale_y_log10(breaks = 10^c(-1:5)) +
+#   scale_x_log10(breaks = 10^c(-5:5)) +
+#   labs(title = paste0("interaction depth = ", 5)) +
+#   theme(legend.position = "bottom")
+
+crossval_results %>%
+  # filter(interaction.depth == 5) %>%
+  filter(MSE <= 1) %>%
+  ggplot(aes(1 / shrinkage, RMSE)) +
+  geom_line(aes(color = factor(n.trees))) +
+  geom_point(aes(color = factor(n.trees))) +
+  scale_x_log10(breaks = 10^c(-5:5)) +
+  facet_wrap(~interaction.depth) +
+  labs(title = paste0("interaction depth = ", 5)) +
+  theme(legend.position = "bottom")
+
+# crossval_results %>%
+#   filter(MSE < 1) %>%
+#   filter(shrinkage < 0.01) %>%
+#   ggplot(aes(n.trees, MSE)) +
+#   geom_point(aes(color = factor(shrinkage))) +
+#   geom_line(aes(color = factor(shrinkage)))
+```
+
+```{r}
+crossval_results %>% 
+  filter(RMSE <= 1.2 * min(RMSE)) %>% 
+  arrange(RMSE)
+
+crossval_results %>% 
+  filter(RMSE <= 1.2 * min(RMSE)) %>% 
+  filter(shrinkage <= 0.001) %>% 
+  ggplot(aes(n.trees, RMSE)) +
+  geom_point(aes(color = factor(shrinkage))) + 
+  geom_line(aes(color = factor(shrinkage))) + 
+  facet_wrap(~interaction.depth) +
+  theme(legend.position = "bottom")
+
+crossval_results %>% 
+  filter(n.trees == 40000) %>% 
+  filter(RMSE < 1) %>% 
+  ggplot(aes(shrinkage, RMSE)) +
+  geom_point(aes(color = factor(interaction.depth))) +
+  geom_line(aes(color = factor(interaction.depth))) +
+  scale_x_log10()
+
+crossval_results %>% 
+  filter(shrinkage == 0.001) %>% 
+  filter(RMSE < 1) %>% 
+  ggplot(aes(n.trees, RMSE)) +
+  geom_point(aes(color = factor(interaction.depth))) +
+  geom_line(aes(color = factor(interaction.depth)))
+  # scale_x_log10()
+```
+
 ### Boosting
+
+```{r}
+# curr.formula
+# 
+# temp.MSE <- kfcv_boost_single(curr.formula, train, num.trees = 400000, shrink = 0.0001, 
+#                   inter.depth = 5, k = 10)
+# 
+# sqrt(temp.MSE)
+
+# sqrt(kfcv_boost_single(curr.formula, train, num.trees = 40000, shrink = 0.001,
+#                        inter.depth = 5, k = 10))
+```
+
 
 ```{r}
 num.trees <- 1000
@@ -177,44 +340,39 @@ boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
 boost2 <- gbm(curr.formula, data = train, distribution = "gaussian",
               n.trees = 40000, interaction.depth = 5)
 
-summary(boost1, plot = FALSE) %>% 
-  ggplot(aes(var, rel.inf)) +
-  geom_col() +
-  coord_flip()
+boost3 <- gbm(curr.formula, 
+              data = train, 
+              distribution = "gaussian",
+              n.trees = 400000, 
+              shrinkage = 0.0001, 
+              interaction.depth = 5)
+boost3.full <- gbm(curr.formula,
+                   data = trainFull, 
+                   distribution = "gaussian",
+                   n.trees = 400000, 
+                   shrinkage = 0.0001, 
+                   interaction.depth = 5)
+
+# summary(boost1, plot = FALSE) %>% 
+#   ggplot(aes(var, rel.inf)) +
+#   geom_col() +
+#   coord_flip()
 
 
 boost2.preds <- predict(boost2, newdata = validate, n.trees = 40000)
 boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
+boost3.preds <- predict(boost3, newdata = validate, n.trees = 400000)
 
 calc_RMSE(validate$Outcome, boost1.preds)
 calc_RMSE(validate$Outcome, boost2.preds)
-calc_RMSE(.5*(boost1.preds + boost2.preds), validate$Outcome)
+calc_RMSE(validate$Outcome, boost3.preds)
 ```
 
 ```{r}
-kfcv_boost <- function(formula, data, num.trees, inter.depth, k) {
-  
-  folds <- sample(1:k, nrow(data), replace = TRUE)
-  
-  results <- numeric(length = k)
-  
-  for (i in 1:k) {
-    fit <- data[folds != i,]
-    leftout <- data[folds == i,]
-    
-    mod <- gbm(formula, data = fit, distribution = "gaussian",
-               n.trees = num.trees, interaction.depth = inter.depth)
-    preds <- predict(mod, newdata = leftout, n.trees = num.trees)
-    results[i] <- calc_RMSE(preds, leftout$Outcome)
-  }
-  
-  mean(results)
-}
-
-
-num.trees <- 40000
-
-kfcv_boost(curr.formula, train, num.trees, inter.depth = 5, k = 10)
+# num.trees <- 40000
+# 
+# kfcv_boost_single(curr.formula, train, num.trees = num.trees, inter.depth = 5, 
+#                   k = 10)
 
 # train.new <- train %>% 
 #   select(-Height, -Roof.Area, -Floor.Area, -Rel.Compact)
@@ -237,9 +395,10 @@ kfcv_boost(curr.formula, train, num.trees, inter.depth = 5, k = 10)
 
 ```{r, echo=FALSE}
 # OUTPUT PREDICTIONS TO FILE
-output.model <- boost1.full
-output.desc <- "boosting"
-output.number <- 3
+output.model <- boost3.full
+output.desc <- "boosting_400k"
+output.number <- 1
+num.trees <- 400000
 
 ID = seq(1,110)
 Outcome = predict(output.model, newdata = test, n.trees = num.trees)
@@ -248,7 +407,7 @@ predictions = cbind(ID, Outcome)
 if (MATT) {
   outpath <- paste(mattswd, "/results/", sep = "")
 } else {
-  outpath <- paste(samswd, "results/", sep = "")
+  outpath <- paste(samswd, "/results/", sep = "")
 }
 
 outname <- paste(outpath, Sys.Date(), output.desc, "_predictions_", 
