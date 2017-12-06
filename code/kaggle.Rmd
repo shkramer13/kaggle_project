@@ -13,6 +13,7 @@ library(tree)
 library(gbm)
 library(randomForest)
 library(tidyverse)
+library(xgboost)
 ```
 
 
@@ -26,7 +27,7 @@ rm(list = ls())
 
 MATT <- TRUE
 
-mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
+mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017/STATS202/kaggle_project'
 samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
 
 if (MATT) {
@@ -98,7 +99,7 @@ test <- test %>%
 ## Set Formula
 ```{r}
 curr.formula <- formula(Outcome ~ . -Height -Roof.Area -Floor.Area -Rel.Compact)
-# curr.formula <- formula(Outcome ~ .)
+#curr.formula <- formula(Outcome ~ .)
 ```
 
 
@@ -146,27 +147,29 @@ sqrt(mean((validate$Outcome - tree1.preds)^2))
 ### Boosting
 
 ```{r}
-num.trees <- 1000
-num.t <- 2000
-boost1 <- gbm(curr.formula, data = train, distribution = "gaussian",
-              n.trees = num.trees, interaction.depth = 5)
-boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
-              n.trees = num.trees, interaction.depth = 5)
+num.trees <- 40000
+num.t <- 40000
+#boost1 <- gbm(curr.formula, data = train, distribution = "gaussian",
+ #             n.trees = num.trees, interaction.depth = 9)
+#boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
+ #             n.trees = num.trees, interaction.depth = 8)
 
 boost2 <- gbm(curr.formula, data = train, distribution = "gaussian",
-              n.trees = 40000, interaction.depth = 5)
+              n.trees = num.t, interaction.depth = 6, shrinkage = 0.001, n.minobsinnode = 7)
 
-summary(boost1, plot = FALSE) %>% 
-  ggplot(aes(var, rel.inf)) +
-  geom_col() +
-  coord_flip()
+boost2.full <- gbm(curr.formula, data = train, distribution = "gaussian", n.trees = num.t, interaction.depth = 6, shrinkage=0.001, n.minobsinnode = 13)
+
+#summary(boost1, plot = FALSE) %>% 
+ # ggplot(aes(var, rel.inf)) +
+#  geom_col() +
+ # coord_flip()
 
 
-boost2.preds <- predict(boost2, newdata = validate, n.trees = 40000)
-boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
+boost2.preds <- predict(boost2, newdata = validate, n.trees = num.t)
+boost1.preds <- predict(boost2.full, newdata = validate, n.trees = num.t)
 sqrt(mean((validate$Outcome - (.5*(boost1.preds+boost2.preds)))^2))
-sqrt(mean((validate$Outcome - boost2.preds))^2 )
-sqrt(mean((validate$Outcome - (boost1.preds)))^2)
+sqrt(mean((validate$Outcome - boost2.preds)^2))
+sqrt(mean((validate$Outcome - boost1.preds)^2))
 ```
 
 ### Random Forest
@@ -179,18 +182,38 @@ randomForest1.preds <- predict(randomForest1, newdata = validate)
 sqrt(mean((validate$Outcome - randomForest1.preds)^2))
 ```
 
+### XGBoost
+```{r}
 
+xtrain = xgb.DMatrix(as.matrix(train[,-ncol(train)][,-1][,-1]), label=train$Outcome)
+xvalidate = xgb.DMatrix(as.matrix(validate[,-ncol(validate)][,-1][,-1]), label=validate$Outcome)
+xtest = xgb.DMatrix(as.matrix(test[,-ncol(test)][,-1]))
+
+params <- list(booster = "gbtree", objective = "reg:linear", eta=0.05, gamma=.04, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+xgb <- xgboost(params=params, data=xtrain, nrounds=2000, print_every_n=1000, maximize=F,eval_metric="rmse"  , verbose=1)
+
+xgb.preds <- predict(xgb, xvalidate)
+sqrt(mean((validate$Outcome-xgb.preds)^2))
+
+
+test <- test %>% 
+  mutate(Orientation = as.numeric(Orientation),
+         Glazing.Distr = as.numeric(Glazing.Distr))
+```
 
 # Write Results
 
 ```{r, echo=FALSE}
 # OUTPUT PREDICTIONS TO FILE
-output.model <- boost1.full
-output.desc <- "boosting"
-output.number <- 3
+output.model <- boost2.full
+output.desc <- "boost"
+output.number <- 1
 
 ID = seq(1,110)
-Outcome = predict(output.model, newdata = test, n.trees = num.trees)
+Outcome = predict(output.model, newdata = test, n.trees = num.t, interaction.depth = 6, shrinkage = 0.001, n.minobsinnode = 7)
+#Outcome = predict(xgb, xtest)
+#Outcome = predict(xgb, xgb.DMatrix(as.matrix(validate)))
+Outcome
 predictions = cbind(ID, Outcome)
 
 if (MATT) {
