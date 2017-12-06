@@ -385,15 +385,6 @@ sqrt(mean((validate$Outcome - boost2.preds)^2))
 sqrt(mean((validate$Outcome - boost1.preds)^2))
 ```
 
-boost2.preds <- predict(boost2, newdata = validate, n.trees = 40000)
-boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
-boost3.preds <- predict(boost3, newdata = validate, n.trees = 400000)
-
-
-calc_RMSE(validate$Outcome, boost1.preds)
-calc_RMSE(validate$Outcome, boost2.preds)
-calc_RMSE(validate$Outcome, boost3.preds)
-```
 
 ```{r}
 # num.trees <- 40000
