@@ -62,13 +62,9 @@ kfcv_boost_single <- function(formula, data, num.trees = 1000, shrink = 0.001,
 
 MATT <- FALSE
 
-<<<<<<< HEAD
 mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017/STATS202/kaggle_project'
 samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS 202/kaggle_project/"
-=======
-mattswd = '/Users/mathieurolfo/Dropbox/Coterm/Fall 2017-2018/STATS202/kaggle_project'
-samswd <- "/Users/Kramer/Dropbox/School/Fall/STATS_202/kaggle_project"
->>>>>>> 97ad67eec23071b39a1754f7b219ba4155cf59ee
+
 
 if (MATT) {
   trainfile = paste(mattswd, '/data/train_train.csv', sep = '')
@@ -323,14 +319,14 @@ crossval_results %>%
 ### Boosting
 
 ```{r}
-<<<<<<< HEAD
+
 num.trees <- 40000
 num.t <- 40000
 #boost1 <- gbm(curr.formula, data = train, distribution = "gaussian",
  #             n.trees = num.trees, interaction.depth = 9)
 #boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
  #             n.trees = num.trees, interaction.depth = 8)
-=======
+
 # curr.formula
 # 
 # temp.MSE <- kfcv_boost_single(curr.formula, train, num.trees = 400000, shrink = 0.0001, 
@@ -350,14 +346,14 @@ boost1 <- gbm(curr.formula, data = train, distribution = "gaussian",
               n.trees = num.trees, interaction.depth = 5)
 boost1.full <- gbm(curr.formula, data = trainFull, distribution = "gaussian",
               n.trees = num.trees, interaction.depth = 5)
->>>>>>> 97ad67eec23071b39a1754f7b219ba4155cf59ee
+
 
 boost2 <- gbm(curr.formula, data = train, distribution = "gaussian",
               n.trees = num.t, interaction.depth = 6, shrinkage = 0.001, n.minobsinnode = 7)
 
-<<<<<<< HEAD
+
 boost2.full <- gbm(curr.formula, data = train, distribution = "gaussian", n.trees = num.t, interaction.depth = 6, shrinkage=0.001, n.minobsinnode = 13)
-=======
+
 boost3 <- gbm(curr.formula, 
               data = train, 
               distribution = "gaussian",
@@ -375,14 +371,12 @@ boost3.full <- gbm(curr.formula,
 #   ggplot(aes(var, rel.inf)) +
 #   geom_col() +
 #   coord_flip()
->>>>>>> 97ad67eec23071b39a1754f7b219ba4155cf59ee
+
 
 #summary(boost1, plot = FALSE) %>% 
  # ggplot(aes(var, rel.inf)) +
 #  geom_col() +
  # coord_flip()
-
-<<<<<<< HEAD
 
 boost2.preds <- predict(boost2, newdata = validate, n.trees = num.t)
 boost1.preds <- predict(boost2.full, newdata = validate, n.trees = num.t)
@@ -390,11 +384,11 @@ sqrt(mean((validate$Outcome - (.5*(boost1.preds+boost2.preds)))^2))
 sqrt(mean((validate$Outcome - boost2.preds)^2))
 sqrt(mean((validate$Outcome - boost1.preds)^2))
 ```
-=======
+
 boost2.preds <- predict(boost2, newdata = validate, n.trees = 40000)
 boost1.preds <- predict(boost1, newdata = validate, n.trees = num.trees)
 boost3.preds <- predict(boost3, newdata = validate, n.trees = 400000)
->>>>>>> 97ad67eec23071b39a1754f7b219ba4155cf59ee
+
 
 calc_RMSE(validate$Outcome, boost1.preds)
 calc_RMSE(validate$Outcome, boost2.preds)
@@ -445,16 +439,11 @@ test <- test %>%
 
 ```{r, echo=FALSE}
 # OUTPUT PREDICTIONS TO FILE
-<<<<<<< HEAD
-output.model <- boost2.full
-output.desc <- "boost"
-output.number <- 1
-=======
-output.model <- boost3.full
+l <- boost3.full
 output.desc <- "boosting_400k"
 output.number <- 1
 num.trees <- 400000
->>>>>>> 97ad67eec23071b39a1754f7b219ba4155cf59ee
+
 
 ID = seq(1,110)
 Outcome = predict(output.model, newdata = test, n.trees = num.t, interaction.depth = 6, shrinkage = 0.001, n.minobsinnode = 7)
